@@ -19,9 +19,6 @@ import h5py
 
 ### Before running, make sure you customize these values. The demo won't work if you don't!
 
-# What is your ClusterOne username? This should be something like "johndoe", not your email address!
-CLUSTERONE_USERNAME = "..."
-
 # Where should your local log files be stored? This should be something like "~/Documents/self-driving-demo/logs/"
 LOCAL_LOG_LOCATION = "..."
 
@@ -83,7 +80,7 @@ def main():
     flags.DEFINE_string(
         "train_data_dir",
         get_data_path(
-            dataset_name = "tensorbot/*",
+            dataset_name = "*/*",
             local_root = ROOT_PATH_TO_LOCAL_DATA,
             local_repo = LOCAL_DATASET_NAME, #all repos (we use glob downstream, see read_data.py)
             path = 'camera/training/*.h5'#all .h5 files
