@@ -60,12 +60,12 @@ class DataReader:
             except IOError:
                 import traceback
                 traceback.print_exc()
-                print "failed to open", tword
+                print("failed to open", tword)
 
         angle = np.concatenate(angle, axis=0)
         speed = np.concatenate(speed, axis=0)
         filters = np.concatenate(filters, axis=0).ravel()
-        print "training on %d/%d examples" % (filters.shape[0], angle.shape[0])
+        print("training on %d/%d examples" % (filters.shape[0], angle.shape[0]))
         return c5x, angle, speed, filters, hdf5_camera
 
     def datagen(self, time_len=1, batch_size=256, ignore_goods=False):
@@ -134,9 +134,9 @@ class DataReader:
                 # print("%5.2f ms" % ((time.time()-start)*1000.0))
 
                 if self.first:
-                    print "X", X_batch.shape
-                    print "angle", angle_batch.shape
-                    print "speed", speed_batch.shape
+                    print("X", X_batch.shape)
+                    print("angle", angle_batch.shape)
+                    print("speed", speed_batch.shape)
                     self.first = False
 
                 yield (X_batch, angle_batch, speed_batch)
