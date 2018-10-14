@@ -44,17 +44,17 @@ def main():
 
     # clusterone snippet 1 - get environment variables
     try:
-        job_name = os.environ['JOB_NAME']
+        job_type = os.environ['MACHINE_TYPE']
         task_index = os.environ['TASK_INDEX']
         ps_hosts = os.environ['PS_HOSTS']
         worker_hosts = os.environ['WORKER_HOSTS']
     except:
-        job_name = None
+        job_type = None
         task_index = 0
         ps_hosts = None
         worker_hosts = None
 
-    if job_name == None:  # if running locally
+    if job_type == None:  # if running locally
         if LOCAL_LOG_LOCATION == "...":
             raise ValueError("LOCAL_LOG_LOCATION needs to be defined")
         if LOCAL_DATASET_LOCATION == "...":
@@ -99,7 +99,7 @@ def main():
                         "to use /logs/ when running on TensorPort cloud.")
 
     # Define worker specific environment variables. Handled automatically.
-    flags.DEFINE_string("job_name", job_name,
+    flags.DEFINE_string("job_type", job_type,
                         "job name: worker or ps")
     flags.DEFINE_integer("task_index", task_index,
                          "Worker task index, should be >= 0. task_index=0 is "
@@ -127,7 +127,7 @@ def main():
 
     # clusterone snippet 3: configure distributed environment
     def device_and_target():
-        # If FLAGS.job_name is not set, we're running single-machine TensorFlow.
+        # If FLAGS.job_type is not set, we're running single-machine TensorFlow.
         # Don't set a device.
         if FLAGS.job_name is None:
             print("Running single-machine training")
