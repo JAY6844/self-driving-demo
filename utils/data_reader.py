@@ -151,7 +151,7 @@ class DataReader:
 
     def gen(self, time_len=1, batch_size=256, ignore_goods=False):
         """" Wrapper for datagen"""
-        for data_row in datagen(time_len, batch_size, ignore_goods):
+        for data_row in self.datagen(time_len, batch_size, ignore_goods):
             X, angle, speed = data_row
             angle = angle[:, -1]
             speed = speed[:, -1]
@@ -165,7 +165,7 @@ class DataReader:
         :output: One row of data
         """
         # Reading a batch of 1
-        X, angle, speed = self.gen_line.next()
+        X, angle, speed = next(self.gen_line)
         angle = angle[:, -1]
         speed = speed[:, -1]
         if X.shape[1] == 1:  # no temporal context
