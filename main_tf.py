@@ -51,15 +51,6 @@ def main():
     ps_hosts = os.environ.get('PS_HOSTS', None)
     worker_hosts = os.environ.get('WORKER_HOSTS')
 
-
-    if job_name == None:  # if running locally
-        if LOCAL_LOG_LOCATION == "...":
-            raise ValueError("LOCAL_LOG_LOCATION needs to be defined")
-        if LOCAL_DATASET_LOCATION == "...":
-            raise ValueError("LOCAL_DATASET_LOCATION needs to be defined")
-        if LOCAL_DATASET_NAME == "...":
-            raise ValueError("LOCAL_DATASET_NAME needs to be defined")
-
     # Path to your data locally. This will enable to run the model both locally and on
     # ClusterOne without changes
     PATH_TO_LOCAL_LOGS = os.path.expanduser(LOCAL_LOG_LOCATION)
