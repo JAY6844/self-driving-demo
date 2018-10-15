@@ -12,6 +12,8 @@ import logging
 import traceback
 import json
 import glob
+import uuid
+
 import tensorflow as tf
 import numpy as np
 import h5py
@@ -43,16 +45,12 @@ def main():
     """ Main wrapper"""
 
     # clusterone snippet 1 - get environment variables
-    try:
-        job_type = os.environ['MACHINE_TYPE']
-        task_index = os.environ['TASK_INDEX']
-        ps_hosts = os.environ['PS_HOSTS']
-        worker_hosts = os.environ['WORKER_HOSTS']
-    except:
-        job_type = None
-        task_index = 0
-        ps_hosts = None
-        worker_hosts = None
+    job_type = os.environ.get('MACHINE_TYPE', None)
+    job_name = os.environ.get('JOB_ID', str(uuid.uuid4()))
+    task_index = os.environ.get('TASK_INDEX', 0)
+    ps_hosts = os.environ.get('PS_HOSTS', None)
+    worker_hosts = os.environ.get('WORKER_HOSTS')
+
 
     if job_type == None:  # if running locally
         if LOCAL_LOG_LOCATION == "...":
@@ -99,8 +97,10 @@ def main():
                         "to use /logs/ when running on TensorPort cloud.")
 
     # Define worker specific environment variables. Handled automatically.
+    flags.DEFINE_string("job_name", job_name,
+                        "job ID")
     flags.DEFINE_string("job_type", job_type,
-                        "job name: worker or ps")
+                        "job type: worker or ps")
     flags.DEFINE_integer("task_index", task_index,
                          "Worker task index, should be >= 0. task_index=0 is "
                          "the chief worker task the performs the variable "
@@ -129,7 +129,7 @@ def main():
     def device_and_target():
         # If FLAGS.job_type is not set, we're running single-machine TensorFlow.
         # Don't set a device.
-        if FLAGS.job_name is None:
+        if FLAGS.job_type is None:
             print("Running single-machine training")
             return (None, "")
 
@@ -148,7 +148,7 @@ def main():
         })
         server = tf.train.Server(
             cluster_spec, job_name=FLAGS.job_name, task_index=FLAGS.task_index)
-        if FLAGS.job_name == "ps":
+        if FLAGS.job_type == "ps":
             server.join()
 
         worker_device = "/job:worker/task:{}".format(FLAGS.task_index)
