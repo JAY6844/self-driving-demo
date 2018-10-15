@@ -45,14 +45,14 @@ def main():
     """ Main wrapper"""
 
     # clusterone snippet 1 - get environment variables
-    job_type = os.environ.get('MACHINE_TYPE', None)
-    job_name = os.environ.get('JOB_ID', str(uuid.uuid4()))
+    job_name = os.environ.get('MACHINE_TYPE', None)
+    job_id = os.environ.get('JOB_ID', str(uuid.uuid4()))
     task_index = os.environ.get('TASK_INDEX', 0)
     ps_hosts = os.environ.get('PS_HOSTS', None)
     worker_hosts = os.environ.get('WORKER_HOSTS')
 
 
-    if job_type == None:  # if running locally
+    if job_name == None:  # if running locally
         if LOCAL_LOG_LOCATION == "...":
             raise ValueError("LOCAL_LOG_LOCATION needs to be defined")
         if LOCAL_DATASET_LOCATION == "...":
@@ -67,7 +67,7 @@ def main():
     # end of clusterone snippet 1
 
     # Flags
-    flags = tf.app.flags
+    flags = tf.app.flagsF
     FLAGS = flags.FLAGS
 
     # clusterone snippet 2: flags.
@@ -97,9 +97,9 @@ def main():
                         "to use /logs/ when running on TensorPort cloud.")
 
     # Define worker specific environment variables. Handled automatically.
-    flags.DEFINE_string("job_name", job_name,
+    flags.DEFINE_string("job_id", job_id,
                         "job ID")
-    flags.DEFINE_string("job_type", job_type,
+    flags.DEFINE_string("job_name", job_name,
                         "job type: worker or ps")
     flags.DEFINE_integer("task_index", task_index,
                          "Worker task index, should be >= 0. task_index=0 is "
@@ -127,9 +127,9 @@ def main():
 
     # clusterone snippet 3: configure distributed environment
     def device_and_target():
-        # If FLAGS.job_type is not set, we're running single-machine TensorFlow.
+        # If FLAGS.job_name is not set, we're running single-machine TensorFlow.
         # Don't set a device.
-        if FLAGS.job_type is None:
+        if FLAGS.job_name is None:
             print("Running single-machine training")
             return (None, "")
 
@@ -148,7 +148,7 @@ def main():
         })
         server = tf.train.Server(
             cluster_spec, job_name=FLAGS.job_name, task_index=FLAGS.task_index)
-        if FLAGS.job_type == "ps":
+        if FLAGS.job_name == "ps":
             server.join()
 
         worker_device = "/job:worker/task:{}".format(FLAGS.task_index)
