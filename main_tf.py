@@ -67,7 +67,7 @@ def main():
     # end of clusterone snippet 1
 
     # Flags
-    flags = tf.app.flagsF
+    flags = tf.app.flags
     FLAGS = flags.FLAGS
 
     # clusterone snippet 2: flags.
