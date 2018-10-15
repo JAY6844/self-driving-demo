@@ -45,7 +45,7 @@ def main():
     """ Main wrapper"""
 
     # clusterone snippet 1 - get environment variables
-    job_name = os.environ.get('MACHINE_TYPE', None)
+    job_name = os.environ.get('JOB_NAME', None)
     job_id = os.environ.get('JOB_ID', str(uuid.uuid4()))
     task_index = os.environ.get('TASK_INDEX', 0)
     ps_hosts = os.environ.get('PS_HOSTS', None)
