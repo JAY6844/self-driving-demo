@@ -5,16 +5,11 @@ import os
 import logging
 import traceback
 import tensorflow as tf
-import json
 import glob
 
 # Credits for this code and the data: comma.ai
 # https://github.com/commaai/research
 # Original License in LICENSE_COMMA
-
-
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
 
 
 class DataReader:
@@ -81,15 +76,15 @@ class DataReader:
         """
         assert time_len > 0
 
-        all_files = glob.glob(os.path.join(self.data_dir))
+        all_files = glob.glob(self.data_dir)
         filter_names = sorted(all_files)
 
-        logger.info("Loading {} hdf5 buckets.".format(len(filter_names)))
+        print("Loading {} hdf5 buckets.".format(len(filter_names)))
 
         c5x, angle, speed, filters, hdf5_camera = self.concatenate(filter_names, time_len=time_len)
         filters_set = set(filters)
 
-        logger.info("camera files {}".format(len(c5x)))
+        print("camera files {}".format(len(c5x)))
 
         X_batch = np.zeros((batch_size, time_len, 3, 160, 320), dtype='uint8')
         angle_batch = np.zeros((batch_size, time_len, 1), dtype='float32')
