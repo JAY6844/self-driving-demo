@@ -1,10 +1,6 @@
 # MIT License, see LICENSE
-# Copyright (c) 2018 ClusterOne Inc.
+# Copyright (c) 2018 Clusterone Inc.
 # Author: Adrian Yi, adrian@clusterone.com
-
-"""
-Runs distributed training of a self-steering car model.
-"""
 
 import json
 import os
@@ -13,54 +9,31 @@ from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 import tensorflow as tf
 from clusterone import get_data_path, get_logs_path
 
-from models.model import *
-from utils.data_reader import *
-from utils.view_steering_model import *
-
-try:
-    # These environment variables will be available on all distributed TensorFlow jobs on Clusterone
-    job_name = os.environ['JOB_NAME']
-    task_index = int(os.environ['TASK_INDEX'])
-    ps_hosts = os.environ['PS_HOSTS']
-    worker_hosts = os.environ['WORKER_HOSTS']
-except KeyError as e:
-    # This will be used for single instance jobs.
-    # If running distributed job locally manually, you need to pass in these values as arguments.
-    job_name = None
-    task_index = 0
-    ps_hosts = ''
-    worker_hosts = ''
-
-
-def make_tf_config(opts):
-    # Distributed TF Estimator codes require TF_CONFIG environment variable
-    if opts.job_name is None:
-        return {}
-    tf_config = {'task': {'type': opts.job_name, 'index': opts.task_index},
-                 'cluster': {'master': [opts.worker_hosts[0]],
-                             'worker': opts.worker_hosts,
-                             'ps': opts.ps_hosts},
-                 'environment': 'cloud'}
-    # Nodes may need to refer to itself as localhost
-    local_ip = 'localhost:' + tf_config['cluster'][opts.job_name][opts.task_index].split(':')[1]
-    tf_config['cluster'][opts.job_name][opts.task_index] = local_ip
-    if job_name == 'worker' and task_index == 0:
-        tf_config['task']['type'] = 'master'
-        tf_config['cluster']['master'][0] = local_ip
-    return tf_config
+from models.model import get_model, get_loss
+from utils.data_reader import DataReader
+from utils.view_steering_model import render_steering_tf
 
 
 def parse_args():
-    parser = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter)
+    """Parse arguments"""
+    parser = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter,
+                            description='''Trains a self-steering car model in single-instance or distributed mode.
+                            For distributed mode, the script will use few environment variables as defaults:
+                            JOB_NAME, TASK_INDEX, PS_HOSTS, and WORKER_HOSTS. These environment variables will be
+                            available on distributed Tensorflow jobs on Clusterone platform by default.
+                            If running this locally, you will need to set these environment variables
+                            or pass them in as arguments (i.e. python main.py --job_name worker --task_index 0
+                            --worker_hosts "localhost:2222,localhost:2223" --ps_hosts "localhost:2224").
+                            If these are not set, the script will run in non-distributed (single instance) mode.''')
     # Configuration for distributed task
-    parser.add_argument('--job_name', type=str, default=job_name,
-                        help='worker/ps or None')
-    parser.add_argument('--task_index', type=int, default=task_index,
+    parser.add_argument('--job_name', type=str, default=os.environ.get('JOB_NAME', None), choices=['worker', 'ps'],
+                        help='Task type for the node in the distributed cluster. Worker-0 will be set as master.')
+    parser.add_argument('--task_index', type=int, default=os.environ.get('TASK_INDEX', 0),
                         help='Worker task index, should be >= 0. task_index=0 is the chief worker.')
-    parser.add_argument('--ps_hosts', type=str, default=ps_hosts,
-                        help='Comma-separated list of hostname:port pairs')
-    parser.add_argument('--worker_hosts', type=str, default=worker_hosts,
-                        help='Comma-separated list of hostname:port pairs')
+    parser.add_argument('--ps_hosts', type=str, default=os.environ.get('PS_HOSTS', ''),
+                        help='Comma-separated list of hostname:port pairs.')
+    parser.add_argument('--worker_hosts', type=str, default=os.environ.get('WORKER_HOSTS', ''),
+                        help='Comma-separated list of hostname:port pairs.')
     # Experiment related parameters
     parser.add_argument('--local_data_root', type=str, default=os.path.abspath('./data/'),
                         help='Path to dataset. This path will be /data on Clusterone.')
@@ -70,13 +43,18 @@ def parse_args():
                         help='Which sub-directory the data will sit inside local_data_root (locally) ' +
                              'or /data/ (on Clusterone)')
     # Model params
-    parser.add_argument('--dropout_rate1', type=float, default=0.2)
-    parser.add_argument('--dropout_rate2', type=float, default=0.5)
-    parser.add_argument('--fc_dim', type=int, default=512)
+    parser.add_argument('--dropout_rate1', type=float, default=0.2,
+                        help='Dropout rate after the convolutional layers.')
+    parser.add_argument('--dropout_rate2', type=float, default=0.5,
+                        help='Dropout rate after the dense layer.')
+    parser.add_argument('--fc_dim', type=int, default=512,
+                        help='Number of dimensions in the dense layer.')
     parser.add_argument('--nogood', action='store_true',
                         help='Ignore "goods" filters')
-    parser.add_argument('--learning_rate', type=float, default=0.0001)
-    parser.add_argument('--learning_decay', type=float, default=0.0001)
+    parser.add_argument('--learning_rate', type=float, default=0.0001,
+                        help='Initial learning rate used in Adam optimizer.')
+    parser.add_argument('--learning_decay', type=float, default=0.0001,
+                        help='Exponential decay rate of the learning rate per step.')
     # Training params
     parser.add_argument('--batch_size', type=int, default=64)
     parser.add_argument('--frames_per_sample', type=int, default=1)
@@ -109,7 +87,38 @@ def parse_args():
     return opts
 
 
+def make_tf_config(opts):
+    """Returns TF_CONFIG that can be used to set the environment variable necessary for distributed training"""
+    if all([opts.job_name is None, not opts.ps_hosts, not opts.worker_hosts]):
+        return {}
+    elif any([opts.job_name is None, not opts.ps_hosts, not opts.worker_hosts]):
+        tf.logging.warn('Distributed setting is incomplete. You must pass job_name, ps_hosts, and worker_hosts.')
+        if opts.job_name is None:
+            tf.logging.warn('Expected job_name of worker or ps. Received {}.'.format(opts.job_name))
+        if not opts.ps_hosts:
+            tf.logging.warn('Expected ps_hosts, list of hostname:port pairs. Got {}. '.format(opts.ps_hosts) +
+                            'Example: --ps_hosts "localhost:2224" or --ps_hosts "localhost:2224,localhost:2225')
+        if not opts.worker_hosts:
+            tf.logging.warn('Expected worker_hosts, list of hostname:port pairs. Got {}. '.format(opts.worker_hosts) +
+                            'Example: --worker_hosts "localhost:2222,localhost:2223"')
+        tf.logging.warn('Ignoring distributed arguments. Running single mode.')
+        return {}
+    tf_config = {'task': {'type': opts.job_name, 'index': opts.task_index},
+                 'cluster': {'master': [opts.worker_hosts[0]],
+                             'worker': opts.worker_hosts,
+                             'ps': opts.ps_hosts},
+                 'environment': 'cloud'}
+    # Nodes may need to refer to itself as localhost
+    local_ip = 'localhost:' + tf_config['cluster'][opts.job_name][opts.task_index].split(':')[1]
+    tf_config['cluster'][opts.job_name][opts.task_index] = local_ip
+    if opts.job_name == 'worker' and opts.task_index == 0:
+        tf_config['task']['type'] = 'master'
+        tf_config['cluster']['master'][0] = local_ip
+    return tf_config
+
+
 def read_row(filenames):
+    """Read a row of data from list of H5 files"""
     reader = DataReader(filenames)
     x, y, s = reader.read_row_tf()
     x.set_shape((3, 160, 320))
@@ -139,7 +148,7 @@ def get_input_fn(files, opts, is_train=True):
 
 
 def get_model_fn(opts):
-    """Returns input_fn.  is_train=True shuffles and repeats data indefinitely"""
+    """Return model fn to be used for Estimator class"""
     def model_fn(features, labels, mode):
         features, s = features['features'], features['s']
         y_pred = get_model(features, opts)
@@ -167,6 +176,7 @@ def get_model_fn(opts):
 
 
 def main(opts):
+    """Main"""
     # Create an estimator
     config = tf.estimator.RunConfig(
         model_dir=opts.log_dir,
@@ -198,19 +208,19 @@ if __name__ == "__main__":
     args = parse_args()
     tf.logging.set_verbosity(args.verbosity)
 
-    print('=' * 30, 'Environment Variables', '=' * 30)
+    tf.logging.debug('=' * 20 + ' Environment Variables ' + '=' * 20)
     for k, v in os.environ.items():
-        print('{}: {}'.format(k, v))
+        tf.logging.debug('{}: {}'.format(k, v))
 
-    print('='*30, 'Arguments', '='*30)
+    tf.logging.debug('=' * 20 + ' Arguments ' + '=' * 20)
     for k, v in sorted(args.__dict__.items()):
         if v is not None:
-            print('{}: {}'.format(k, v))
+            tf.logging.debug('{}: {}'.format(k, v))
 
     TF_CONFIG = make_tf_config(args)
-    print('='*30, 'TF_CONFIG', '='*30)
-    print(TF_CONFIG)
+    tf.logging.debug('=' * 20 + ' TF_CONFIG ' + '=' * 20)
+    tf.logging.debug(TF_CONFIG)
     os.environ['TF_CONFIG'] = json.dumps(TF_CONFIG)
 
-    print('='*30, 'Train starting', '='*30)
+    tf.logging.info('=' * 20 + ' Train starting ' + '=' * 20)
     main(args)
