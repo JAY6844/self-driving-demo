@@ -21,25 +21,41 @@ To run this project, you need:
 
 - [Python](https://python.org) 3.5+
 - [Git](https://git-scm.com/)
-- The TensorFlow Python library. Get it with `pip install tensorflow`
 - The Clusterone Python library. Install it with `pip install clusterone`
+- GitHub account. Create an account for free on [https://github.com/](https://github.com/).
 - A Clusterone account. [Join the waitlist](https://clusterone.com/join-waitlist/) if you don't have an account yet.
 
 ## Usage
 
 Running a job on Clusterone is simple with the `just` command line tool that comes included with the Clusterone Python package.
 
+### Setting up
+
+Follow the **Set Up** section of the [Get Started](https://docs.clusterone.com/get-started#set-up) guide to add your GitHub personal access token to your Clusterone account.
+
+Then follow [Create a project](https://docs.clusterone.com/get-started#create-a-project) section to add MNIST project. Use **`clusterone/self-driving-demo`** repository instead of what is shown in the guide.
+
 ### Run on Clusterone
 
-To run the model on Clusterone, you first need a Clusterone account. Log in with `just login`.
+These instructions use the `just` command line tool. It comes with the Clusterone Python library and is installed automatically with the library.
 
-`cd` into the directory where you cloned this repository to and create a new project with `just init project self-driving-demo`. The data is already uploaded to Clusterone, so you don't need to worry about it.
+If you have used Clusterone library before, make sure it is connected to the correct endpoint by running `just config endpoint https://clusterone.com`.
 
-Push the project code to Clusterone with `git push clusterone master`.
+Log into your Clusterone account using `just login`, and entering your login information.
 
-When the upload is complete, create a job to run the model on Clusterone:
+First, let's make sure that you have the project. Execute the command `just get projects` to see all your projects. You should see something like this:
+```shell
+>> just get projects
+All projects:
 
-```bash
+| # | Project                    | Created at          | Description |
+|---|----------------------------|---------------------|-------------|
+| 0 | username/self-driving-demo | 2018-11-19T21:13:30 |             |
+```
+where `username` should be your Clusterone account name.
+
+Let's create a job. Make sure to replace `username` with your username.
+```shell
 just create job distributed \
   --project self-driving-demo \
   --name sdc-first-job \
@@ -52,7 +68,7 @@ just create job distributed \
 
 Now the final step is to start the job:
 
-```bash
+```shell
 just start job -p self-driving-demo/sdc-first-job
 ```
 
