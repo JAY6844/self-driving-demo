@@ -44,6 +44,8 @@ def parse_args():
     parser.add_argument('--data_subpath', type=str, default='',
                         help='Which sub-directory the data will sit inside local_data_root (locally) ' +
                              'or /data/ (on Clusterone)')
+    parser.add_argument('--absolute_data_path', type=str, default=None,
+                        help='Using this will ignore other data path arguments.')
 
     # Model params
     parser.add_argument('--dropout_rate1', type=float, default=0.2,
@@ -83,10 +85,13 @@ def parse_args():
     # Parse args
     opts = parser.parse_args()
 
-    opts.train_data = get_data_path(dataset_name='*/*',
-                                    local_root=opts.local_data_root,
-                                    local_repo=opts.data_subpath,
-                                    path='camera/training/*.h5')
+    if opts.absolute_data_path is None:
+        opts.train_data = get_data_path(dataset_name='*/*',
+                                        local_root=opts.local_data_root,
+                                        local_repo=opts.data_subpath,
+                                        path='camera/training/*.h5')
+    else:
+        opts.train_data = opts.absolute_data_path
     opts.log_dir = get_logs_path(root=opts.local_log_root)
 
     opts.ps_hosts = opts.ps_hosts.split(',') if opts.ps_hosts else []

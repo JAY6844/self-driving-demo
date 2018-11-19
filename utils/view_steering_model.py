@@ -1,16 +1,8 @@
 """ Credits comma.ai """
 
 # !/usr/bin/env python
-import argparse
-import sys
 import numpy as np
-import h5py
-import json
 import tensorflow as tf
-from pdb import set_trace as bp
-import os
-import time
-import scipy.misc
 from tensorflow import py_func
 
 # ***** get perspective transform for images *****

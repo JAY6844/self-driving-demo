@@ -2,6 +2,7 @@ import tensorflow as tf
 
 
 def get_model(X, opts):
+    """Given input tensor and opts, return output Tensor of a CNN"""
     conv1 = tf.layers.conv2d(
         tf.reshape(X, [opts.batch_size, 3, 160, 320]),
         filters=16,
@@ -53,14 +54,15 @@ def get_model(X, opts):
 
 
 def get_loss(predictions, labels):
-    # loss = tf.nn.l2_loss(predictions-labels)
+    """MSE loss function"""
     loss = tf.reduce_mean(tf.square(predictions - labels))
     return loss
 
 
 def variable_summaries(var):
-    """Attach a lot of summaries to a Tensor (for TensorBoard visualization).
-   credits: https://www.tensorflow.org/get_started/summaries_and_tensorboard
+    """
+    Attach a lot of summaries to a Tensor (for TensorBoard visualization).
+    credits: https://www.tensorflow.org/get_started/summaries_and_tensorboard
     """
     with tf.name_scope('summaries'):
         mean = tf.reduce_mean(var)

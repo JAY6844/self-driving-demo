@@ -1,4 +1,7 @@
 # Demo of a Self-Driving Car Steering Model for Clusterone
+<p align="center">
+<img src="co_logo.png" alt="Clusterone" width="200">
+</p>
 
 This is a basic self-steering car model implemented in TensorFlow. It is used as a demo project to get started with the [Clusterone](https://clusterone.com) deep learning computation platform.
 
@@ -40,11 +43,10 @@ When the upload is complete, create a job to run the model on Clusterone:
 just create job distributed \
   --project self-driving-demo \
   --name sdc-first-job \
-  --datasets /public/self-driving-demo-data \
   --docker-image tensorflow-1.11.0-cpu-py35 \
   --ps-docker-image tensorflow-1.11.0-cpu-py35 \
   --time-limit 1h \
-  --command "python -m main" \
+  --command "python -m main --absolute_data_path /public/self-driving-demo-data/" \
   --setup_command "pip install -r requirements.txt"
 ```
 
