@@ -25,6 +25,7 @@ def parse_args():
                             or pass them in as arguments (i.e. python main.py --job_name worker --task_index 0
                             --worker_hosts "localhost:2222,localhost:2223" --ps_hosts "localhost:2224").
                             If these are not set, the script will run in non-distributed (single instance) mode.''')
+
     # Configuration for distributed task
     parser.add_argument('--job_name', type=str, default=os.environ.get('JOB_NAME', None), choices=['worker', 'ps'],
                         help='Task type for the node in the distributed cluster. Worker-0 will be set as master.')
@@ -34,6 +35,7 @@ def parse_args():
                         help='Comma-separated list of hostname:port pairs.')
     parser.add_argument('--worker_hosts', type=str, default=os.environ.get('WORKER_HOSTS', ''),
                         help='Comma-separated list of hostname:port pairs.')
+
     # Experiment related parameters
     parser.add_argument('--local_data_root', type=str, default=os.path.abspath('./data/'),
                         help='Path to dataset. This path will be /data on Clusterone.')
@@ -42,6 +44,7 @@ def parse_args():
     parser.add_argument('--data_subpath', type=str, default='',
                         help='Which sub-directory the data will sit inside local_data_root (locally) ' +
                              'or /data/ (on Clusterone)')
+
     # Model params
     parser.add_argument('--dropout_rate1', type=float, default=0.2,
                         help='Dropout rate after the convolutional layers.')
@@ -55,13 +58,14 @@ def parse_args():
                         help='Initial learning rate used in Adam optimizer.')
     parser.add_argument('--learning_decay', type=float, default=0.0001,
                         help='Exponential decay rate of the learning rate per step.')
+
     # Training params
-    parser.add_argument('--batch_size', type=int, default=64)
-    parser.add_argument('--frames_per_sample', type=int, default=1)
-    parser.add_argument('--steps_per_epoch', type=int, default=10000)
-    parser.add_argument('--epochs', type=int, default=200)
+    parser.add_argument('--batch_size', type=int, default=64,
+                        help='Batch size to use during training and evaluation.')
+    parser.add_argument('--max_steps', type=int, default=10000,
+                        help='Max number of steps to train for.')
     parser.add_argument('--verbosity', type=str, default='INFO', choices=['CRITICAL', 'ERROR', 'WARN', 'INFO', 'DEBUG'],
-                        help='TF logging level. To see intermediate results printed, set this to INFO or DEBUG.')
+                        help='TF logging level. To log intermediate results, set this to INFO or DEBUG.')
     parser.add_argument('--num_threads', type=int, default=1,
                         help='Number of threads to use to prepare data')
     parser.add_argument('--max_ckpts', type=int, default=2,
@@ -75,15 +79,19 @@ def parse_args():
     parser.add_argument('--eval_secs', type=int, default=60,
                         help='How frequently to run evaluation step. ' +
                              'By default, there is no evaluation dataset, thus effectively no evaluation.')
+
     # Parse args
     opts = parser.parse_args()
+
     opts.train_data = get_data_path(dataset_name='*/*',
                                     local_root=opts.local_data_root,
                                     local_repo=opts.data_subpath,
                                     path='camera/training/*.h5')
     opts.log_dir = get_logs_path(root=opts.local_log_root)
-    opts.ps_hosts = opts.ps_hosts.split(',')
-    opts.worker_hosts = opts.worker_hosts.split(',')
+
+    opts.ps_hosts = opts.ps_hosts.split(',') if opts.ps_hosts else []
+    opts.worker_hosts = opts.worker_hosts.split(',') if opts.worker_hosts else []
+
     return opts
 
 
@@ -103,11 +111,20 @@ def make_tf_config(opts):
                             'Example: --worker_hosts "localhost:2222,localhost:2223"')
         tf.logging.warn('Ignoring distributed arguments. Running single mode.')
         return {}
-    tf_config = {'task': {'type': opts.job_name, 'index': opts.task_index},
-                 'cluster': {'master': [opts.worker_hosts[0]],
-                             'worker': opts.worker_hosts,
-                             'ps': opts.ps_hosts},
-                 'environment': 'cloud'}
+
+    tf_config = {
+        'task': {
+            'type': opts.job_name,
+            'index': opts.task_index
+        },
+        'cluster': {
+            'master': [opts.worker_hosts[0]],
+            'worker': opts.worker_hosts,
+            'ps': opts.ps_hosts
+        },
+        'environment': 'cloud'
+    }
+
     # Nodes may need to refer to itself as localhost
     local_ip = 'localhost:' + tf_config['cluster'][opts.job_name][opts.task_index].split(':')[1]
     tf_config['cluster'][opts.job_name][opts.task_index] = local_ip
@@ -194,7 +211,7 @@ def main(opts):
     eval_input_fn = get_input_fn(opts.train_data, opts, is_train=False)
 
     train_spec = tf.estimator.TrainSpec(input_fn=train_input_fn,
-                                        max_steps=1e6)
+                                        max_steps=opts.max_steps)
     eval_spec = tf.estimator.EvalSpec(input_fn=eval_input_fn,
                                       steps=1,
                                       start_delay_secs=0,
