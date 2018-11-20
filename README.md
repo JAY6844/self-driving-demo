@@ -57,7 +57,7 @@ where `username` should be your Clusterone account name.
 Let's create a job. Make sure to replace `username` with your username.
 ```shell
 just create job distributed \
-  --project self-driving-demo \
+  --project username/self-driving-demo \
   --name sdc-first-job \
   --docker-image tensorflow-1.11.0-cpu-py35 \
   --ps-docker-image tensorflow-1.11.0-cpu-py35 \
