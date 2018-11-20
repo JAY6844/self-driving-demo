@@ -91,9 +91,9 @@ def parse_args():
                                         local_repo=opts.data_subpath,
                                         path='camera/training/*.h5')
     else:
-        opts.train_data = opts.absolute_data_path
-    opts.log_dir = get_logs_path(root=opts.local_log_root)
+        opts.train_data = os.path.join(opts.absolute_data_path, 'camera/training/*.h5')
 
+    opts.log_dir = get_logs_path(root=opts.local_log_root)
     opts.ps_hosts = opts.ps_hosts.split(',') if opts.ps_hosts else []
     opts.worker_hosts = opts.worker_hosts.split(',') if opts.worker_hosts else []
 

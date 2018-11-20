@@ -39,7 +39,7 @@ Then follow [Create a project](https://docs.clusterone.com/get-started#create-a-
 
 These instructions use the `just` command line tool. It comes with the Clusterone Python library and is installed automatically with the library.
 
-If you have used Clusterone library before, make sure it is connected to the correct endpoint by running `just config endpoint https://clusterone.com`.
+If you have used Clusterone library before with a different Clusterone installation, make sure it is connected to the correct endpoint by running `just config endpoint https://clusterone.com`.
 
 Log into your Clusterone account using `just login`, and entering your login information.
 
