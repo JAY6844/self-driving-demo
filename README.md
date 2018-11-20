@@ -33,7 +33,7 @@ Running a job on Clusterone is simple with the `just` command line tool that com
 
 Follow the **Set Up** section of the [Get Started](https://docs.clusterone.com/get-started#set-up) guide to add your GitHub personal access token to your Clusterone account.
 
-Then follow [Create a project](https://docs.clusterone.com/get-started#create-a-project) section to add MNIST project. Use **`clusterone/self-driving-demo`** repository instead of what is shown in the guide.
+Then follow [Create a project](https://docs.clusterone.com/get-started#create-a-project) section to add self-driving-demo project. Use **`clusterone/self-driving-demo`** repository instead of what is shown in the guide.
 
 ### Run on Clusterone
 
