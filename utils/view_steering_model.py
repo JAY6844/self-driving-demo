@@ -1,16 +1,8 @@
 """ Credits comma.ai """
 
 # !/usr/bin/env python
-import argparse
-import sys
 import numpy as np
-import h5py
-import json
 import tensorflow as tf
-from pdb import set_trace as bp
-import os
-import time
-import scipy.misc
 from tensorflow import py_func
 
 # ***** get perspective transform for images *****
@@ -51,8 +43,7 @@ def perspective_tform(x, y):
 # ***** functions to draw lines *****
 def draw_pt(img, x, y, color, sz=1):
     row, col = perspective_tform(x, y)
-    if row >= 0 and row < img.shape[0] and \
-            col >= 0 and col < img.shape[1]:
+    if all([row >= 0, row < img.shape[0], col >= 0, col < img.shape[1]]):
         img[int(row - sz):int(row + sz), int(col - sz):int(col + sz)] = color
 
 
@@ -106,7 +97,7 @@ def render_steering_frame(img, ground_truth, speed_ms, prediction):
     img = img.swapaxes(0, 2).swapaxes(0, 1)
     draw_path_on(img, speed_ms, - angle_steers / 10.0)
     draw_path_on(img, speed_ms, - predicted_steer / 10.0, (0, 255, 0))
-    return (img)
+    return img
 
 
 def render_steering_frame_batch(img_batch, ground_truth_batch, speed_ms_batch, prediction_batch):
@@ -139,14 +130,3 @@ def render_steering_tf(img_batch, ground_truth_batch, speed_ms_batch, prediction
     Bridge render_steering_frame_batch to tf
     """
     return py_func(render_steering_frame_batch, [img_batch, ground_truth_batch, speed_ms_batch, prediction_batch], tf.float32)
-
-
-if __name__ == "__main__":
-    import data_reader as dr
-
-    DATA_DIR = os.path.expanduser('~/Documents/comma/comma-final/camera/training')
-    print("Running tests")
-    gen_train = dr.gen(DATA_DIR)
-    X, angle, speed = gen_train.next()
-
-    out = render_steering_frame_batch(X, angle, speed, np.repeat(3., X.shape[0]))

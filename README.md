@@ -1,16 +1,11 @@
 # Demo of a Self-Driving Car Steering Model for Clusterone
-
 <p align="center">
 <img src="co_logo.png" alt="Clusterone" width="200">
-<br>
-<br>
-<a href="https://slackin-altdyjrdgq.now.sh"><img src="https://slackin-altdyjrdgq.now.sh/badge.svg" alt="join us on slack"></a>
 </p>
 
 This is a basic self-steering car model implemented in TensorFlow. It is used as a demo project to get started with the [Clusterone](https://clusterone.com) deep learning computation platform.
 
-
-Follow the [Getting Started guide](https://docs.clusterone.com/get-started) for Clusterone and read the author's blog post about building this demo [here](https://clusterone.com/blog/2017/08/07/self-driving-car-tensorflow/).
+Follow the [Getting Started guide](https://docs.clusterone.com/get-started) for Clusterone and read the author's original blog post about building this demo [here](https://clusterone.com/blog/selfdrivingcar).
 
 
 ## Table of Contents
@@ -23,35 +18,57 @@ Follow the [Getting Started guide](https://docs.clusterone.com/get-started) for 
 
 To run this project, you need:
 
-- [Python](https://python.org) 2.7 or 3.5 (or higher).
-- [Git](https://git-scm.com/) and [Git Large File Storage (LFS)](https://git-lfs.github.com/)
-- The TensorFlow Python library. Get it with `pip install tensorflow`
+- [Python](https://python.org) 3.5+
+- [Git](https://git-scm.com/)
 - The Clusterone Python library. Install it with `pip install clusterone`
-- A Clusterone account. [Join the waitlist](https://clusterone.com/join-waitlist/) if you don't have an account yet.
+- GitHub account. Create an account for free on [https://github.com/](https://github.com/).
+- A Clusterone account. Sign up [here](https://clusterone.com/join-waitlist/)  for your SaaS account.
 
 ## Usage
 
 Running a job on Clusterone is simple with the `just` command line tool that comes included with the Clusterone Python package.
 
+### Setting up
+
+Follow the **Set Up** section of the [Get Started](https://docs.clusterone.com/get-started#set-up) guide to add your GitHub personal access token to your Clusterone account.
+
+Then follow [Create a project](https://docs.clusterone.com/get-started#create-a-project) section to add self-driving-demo project. Use **`clusterone/self-driving-demo`** repository instead of what is shown in the guide.
+
 ### Run on Clusterone
 
-To run the model on Clusterone, you first need a Clusterone account. Log in with `just login`.
+These instructions use the `just` command line tool. It comes with the Clusterone Python library and is installed automatically with the library.
 
-`cd` into the directory where you cloned this repository to and create a new project with `just init project self-driving-demo`. The data is already uploaded to Clusterone, so you don't need to worry about it.
+If you have used Clusterone library before with a different Clusterone installation, make sure it is connected to the correct endpoint by running `just config endpoint https://clusterone.com`.
 
-Push the project code to Clusterone with `git push clusterone master`.
+Log into your Clusterone account using `just login`, and entering your login information.
 
-When the upload is complete, create a job to run the model on Clusterone:
+First, let's make sure that you have the project. Execute the command `just get projects` to see all your projects. You should see something like this:
+```shell
+>> just get projects
+All projects:
 
-```bash
-just create job distributed --name first-job --project self-driving-demo \
---datasets tensorbot/self-driving-demo-data --module main_tf
+| # | Project                    | Created at          | Description |
+|---|----------------------------|---------------------|-------------|
+| 0 | username/self-driving-demo | 2018-11-19T21:13:30 |             |
+```
+where `username` should be your Clusterone account name.
+
+Let's create a job. Make sure to replace `username` with your username.
+```shell
+just create job distributed \
+  --project username/self-driving-demo \
+  --name sdc-first-job \
+  --docker-image tensorflow-1.11.0-cpu-py35 \
+  --ps-docker-image tensorflow-1.11.0-cpu-py35 \
+  --time-limit 1h \
+  --command "python -m main --absolute_data_path /public/self-driving-demo-data/" \
+  --setup_command "pip install -r requirements.txt"
 ```
 
 Now the final step is to start the job:
 
-```bash
-just start job -p self-driving-demo/first-job
+```shell
+just start job -p self-driving-demo/sdc-first-job
 ```
 
 You can monitor the execution of your job on Clusterone using `just get events`.
@@ -59,6 +76,8 @@ You can monitor the execution of your job on Clusterone using `just get events`.
 Instead of running the model from the command line, you can also use Clusterone's graphical web interface [Matrix](https://clusterone.com/matrix).
 
 For a more detailed guide on how to run this project on Clusterone, check out the [Getting Started guide](https://docs.clusterone.com/get-started). To learn more about Clusterone, visit our [website](https://clusterone.com).
+
+If you have any further questions, don't hesitate to write us a support ticket on [Clusterone.com](https://clusterone.com) or join us on [Slack](https://bit.ly/2OPc6JH)!
 
 ## License
 
