@@ -5,8 +5,7 @@
 
 This is a basic self-steering car model implemented in TensorFlow. It is used as a demo project to get started with the [Clusterone](https://clusterone.com) deep learning computation platform.
 
-
-Follow the [Getting Started guide](https://docs.clusterone.com/get-started) for Clusterone and read the author's blog post about building this demo [here](https://clusterone.com/blog/2017/08/07/self-driving-car-tensorflow/).
+Follow the [Getting Started guide](https://docs.clusterone.com/get-started) for Clusterone and read the author's original blog post about building this demo [here](https://clusterone.com/blog/selfdrivingcar).
 
 
 ## Table of Contents
@@ -23,7 +22,7 @@ To run this project, you need:
 - [Git](https://git-scm.com/)
 - The Clusterone Python library. Install it with `pip install clusterone`
 - GitHub account. Create an account for free on [https://github.com/](https://github.com/).
-- A Clusterone account. [Join the waitlist](https://clusterone.com/join-waitlist/) if you don't have an account yet.
+- A Clusterone account. Sign up [here](https://clusterone.com/join-waitlist/)  for your SaaS account.
 
 ## Usage
 
