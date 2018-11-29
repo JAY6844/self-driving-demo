@@ -5,7 +5,7 @@
 
 This is a basic self-steering car model implemented in TensorFlow. It is used as a demo project to get started with the [Clusterone](https://clusterone.com) deep learning computation platform.
 
-Follow the [Getting Started guide](https://docs.clusterone.com/get-started) for Clusterone and read the author's original blog post about building this demo [here](https://clusterone.com/blog/selfdrivingcar).
+Follow the [Getting Started guide](https://docs.clusterone.com/get-started) for Clusterone and read the author's original blog post about building this demo [here](https://clusterone.com/tutorials/self-steering-car-in-tensorflow).
 
 
 ## Table of Contents
@@ -62,13 +62,20 @@ just create job distributed \
   --ps-docker-image tensorflow-1.11.0-cpu-py35 \
   --time-limit 1h \
   --command "python -m main --absolute_data_path /public/self-driving-demo-data/" \
-  --setup_command "pip install -r requirements.txt"
+  --setup-command "pip install -r requirements.txt"
 ```
 
 Now the final step is to start the job:
-
 ```shell
-just start job -p self-driving-demo/sdc-first-job
+just start job demo-user/sdc-first-job
+```
+you can find the `job name` by running the following:
+```shell
+>> just get jobs
+All jobs:
+| # | Name                      | Id       | Project                                | Status   | Launched at      |
+|---|---------------------------|----------|----------------------------------------|----------|------------------|
+| 1 | demo-user/sdc-first-job   | <JOBID>  | None/self-driving-demo:<PROJECTID>     | created  |                  |
 ```
 
 You can monitor the execution of your job on Clusterone using `just get events`.
