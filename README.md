@@ -67,9 +67,9 @@ just create job distributed \
 
 Now the final step is to start the job:
 ```shell
-just start job <JOBID>
+just start job demo-user/sdc-first-job
 ```
-you can find the `job id` by running the following:
+you can find the `job name` by running the following:
 ```shell
 >> just get jobs
 All jobs:
